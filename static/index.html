@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Query AI - Natural Language to MongoDB</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MongoDB Query AI</h1>
+            <p class="subtitle">Convert Natural Language to MongoDB Queries</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">API Status:</span>
+                <span id="api-status" class="status-value">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Database:</span>
+                <span id="db-status" class="status-value">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Total Records:</span>
+                <span id="total-records" class="status-value">-</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="query">Query Builder</button>
+                <button class="tab-button" data-tab="aggregation">Aggregation</button>
+                <button class="tab-button" data-tab="report">Reports</button>
+                <button class="tab-button" data-tab="stats">Statistics</button>
+            </div>
+
+            <!-- Query Tab -->
+            <div id="query-tab" class="tab-content active">
+                <div class="input-section">
+                    <h2>Natural Language Query</h2>
+                    <div class="examples">
+                        <p><strong>Try these examples:</strong></p>
+                        <ul>
+                            <li class="example-item" data-query="Find all failed email notifications">Find all failed email notifications</li>
+                            <li class="example-item" data-query="Show me notifications sent in the last 7 days">Show me notifications sent in the last 7 days</li>
+                            <li class="example-item" data-query="Get all pending SMS notifications with high priority">Get all pending SMS notifications with high priority</li>
+                            <li class="example-item" data-query="Find notifications for customer C001">Find notifications for customer C001</li>
+                        </ul>
+                    </div>
+                    <textarea
+                        id="query-input"
+                        class="input-textarea"
+                        placeholder="Enter your query in plain English... (e.g., 'Find all failed notifications from last week')"
+                        rows="4"></textarea>
+                    <div class="button-group">
+                        <button id="generate-query-btn" class="btn btn-primary">Generate Query</button>
+                        <button id="execute-query-btn" class="btn btn-success">Generate & Execute</button>
+                        <button id="clear-query-btn" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div id="query-result-section" class="result-section hidden">
+                    <h3>Generated MongoDB Query</h3>
+                    <div class="explanation" id="query-explanation"></div>
+                    <pre id="query-output" class="code-output"></pre>
+
+                    <div id="query-execution-results" class="execution-results hidden">
+                        <div class="results-header">
+                            <h3>Query Results</h3>
+                            <div class="results-meta">
+                                <span id="query-result-count" class="result-count"></span>
+                                <span id="query-execution-time" class="execution-time"></span>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="query-results-table"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aggregation Tab -->
+            <div id="aggregation-tab" class="tab-content">
+                <div class="input-section">
+                    <h2>Aggregation Pipeline</h2>
+                    <div class="examples">
+                        <p><strong>Try these examples:</strong></p>
+                        <ul>
+                            <li class="example-item" data-query="Count notifications by status">Count notifications by status</li>
+                            <li class="example-item" data-query="Group notifications by channel and show counts">Group notifications by channel and show counts</li>
+                            <li class="example-item" data-query="Top 10 customers by notification count">Top 10 customers by notification count</li>
+                            <li class="example-item" data-query="Show success rate by notification type">Show success rate by notification type</li>
+                        </ul>
+                    </div>
+                    <textarea
+                        id="aggregation-input"
+                        class="input-textarea"
+                        placeholder="Describe your aggregation query... (e.g., 'Count notifications by status and channel')"
+                        rows="4"></textarea>
+                    <div class="button-group">
+                        <button id="generate-agg-btn" class="btn btn-primary">Generate Pipeline</button>
+                        <button id="execute-agg-btn" class="btn btn-success">Generate & Execute</button>
+                        <button id="clear-agg-btn" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div id="agg-result-section" class="result-section hidden">
+                    <h3>Generated Aggregation Pipeline</h3>
+                    <div class="explanation" id="agg-explanation"></div>
+                    <pre id="agg-output" class="code-output"></pre>
+
+                    <div id="agg-execution-results" class="execution-results hidden">
+                        <div class="results-header">
+                            <h3>Aggregation Results</h3>
+                            <div class="results-meta">
+                                <span id="agg-execution-time" class="execution-time"></span>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="agg-results-table"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Tab -->
+            <div id="report-tab" class="tab-content">
+                <div class="input-section">
+                    <h2>Report Generator</h2>
+                    <div class="examples">
+                        <p><strong>Try these examples:</strong></p>
+                        <ul>
+                            <li class="example-item" data-query="Daily notification summary for the last 7 days">Daily notification summary for the last 7 days</li>
+                            <li class="example-item" data-query="Channel performance report showing delivery rates">Channel performance report showing delivery rates</li>
+                            <li class="example-item" data-query="Failed notifications summary with error breakdown">Failed notifications summary with error breakdown</li>
+                        </ul>
+                    </div>
+                    <textarea
+                        id="report-input"
+                        class="input-textarea"
+                        placeholder="Describe the report you want to generate... (e.g., 'Weekly notification summary by channel')"
+                        rows="4"></textarea>
+                    <div class="form-group">
+                        <label for="report-format">Report Format:</label>
+                        <select id="report-format" class="select-input">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="generate-report-btn" class="btn btn-success">Generate Report</button>
+                        <button id="clear-report-btn" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div id="report-result-section" class="result-section hidden">
+                    <h3>Report Generated</h3>
+                    <div id="report-info" class="report-info"></div>
+                    <div id="report-download" class="download-section"></div>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div id="stats-tab" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Notifications</h3>
+                        <div id="total-notifications" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>By Status</h3>
+                        <div id="status-breakdown" class="stat-breakdown"></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>By Channel</h3>
+                        <div id="channel-breakdown" class="stat-breakdown"></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Database Schema</h3>
+                        <button id="view-schema-btn" class="btn btn-primary">View Schema</button>
+                        <div id="schema-display" class="schema-display hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+
+        <div id="error-toast" class="toast error-toast hidden">
+            <span id="error-message"></span>
+            <button class="toast-close">&times;</button>
+        </div>
+
+        <div id="success-toast" class="toast success-toast hidden">
+            <span id="success-message"></span>
+            <button class="toast-close">&times;</button>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

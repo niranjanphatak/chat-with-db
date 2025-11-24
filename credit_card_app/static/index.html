@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Statement Analyzer - AI Powered</title>
+    <link rel="stylesheet" href="/credit-card/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💳 Credit Card Statement Analyzer</h1>
+            <p class="subtitle">Analyze Your Transactions with Natural Language</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">Service Status:</span>
+                <span id="service-status" class="status-value">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Total Transactions:</span>
+                <span id="total-transactions" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Total Spending:</span>
+                <span id="total-spending" class="status-value">-</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="query">Transaction Search</button>
+                <button class="tab-button" data-tab="analyze">Smart Analysis</button>
+                <button class="tab-button" data-tab="dashboard">Dashboard</button>
+            </div>
+
+            <!-- Transaction Search Tab -->
+            <div id="query-tab" class="tab-content active">
+                <div class="input-section">
+                    <h2>🔍 Search Your Transactions</h2>
+                    <div class="examples">
+                        <p><strong>Try these queries:</strong></p>
+                        <ul>
+                            <li class="example-item" data-query="Show all dining transactions over $50">Show all dining transactions over $50</li>
+                            <li class="example-item" data-query="Find transactions at Amazon">Find transactions at Amazon</li>
+                            <li class="example-item" data-query="Show me all refunds">Show me all refunds</li>
+                            <li class="example-item" data-query="Get all travel expenses from last month">Get all travel expenses from last month</li>
+                            <li class="example-item" data-query="Show pending transactions">Show pending transactions</li>
+                            <li class="example-item" data-query="Find all grocery purchases in November">Find all grocery purchases in November</li>
+                        </ul>
+                    </div>
+                    <textarea
+                        id="query-input"
+                        class="input-textarea"
+                        placeholder="Ask about your transactions... (e.g., 'Show all dining transactions over $50')"
+                        rows="3"></textarea>
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="generate-summary" checked>
+                            <span>Generate AI Summary</span>
+                        </label>
+                    </div>
+                    <div class="button-group">
+                        <button id="execute-query-btn" class="btn btn-primary">Search Transactions</button>
+                        <button id="clear-query-btn" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div id="query-summary-section" class="summary-section hidden">
+                    <div class="summary-card">
+                        <h3>📊 AI Summary</h3>
+                        <p id="query-summary-text" class="summary-text"></p>
+                    </div>
+                </div>
+
+                <div id="query-result-section" class="result-section hidden">
+                    <h3>Generated MongoDB Query</h3>
+                    <div class="explanation" id="query-explanation"></div>
+                    <pre id="query-output" class="code-output"></pre>
+
+                    <div id="query-execution-results" class="execution-results hidden">
+                        <div class="results-header">
+                            <h3>📋 Transaction Results</h3>
+                            <div class="results-meta">
+                                <span id="query-result-count" class="result-count"></span>
+                                <span id="query-execution-time" class="execution-time"></span>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="query-results-table"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Analysis Tab -->
+            <div id="analyze-tab" class="tab-content">
+                <div class="input-section">
+                    <h2>🧠 Smart Transaction Analysis</h2>
+                    <p class="info-text">Get AI-powered insights about your spending patterns. Only aggregated statistics are analyzed - your individual transaction details remain private.</p>
+                    <div class="examples">
+                        <p><strong>Try these analyses:</strong></p>
+                        <ul>
+                            <li class="example-item" data-query="Analyze my spending for last month">Analyze my spending for last month</li>
+                            <li class="example-item" data-query="Summary of all dining expenses">Summary of all dining expenses</li>
+                            <li class="example-item" data-query="What are my top spending categories?">What are my top spending categories?</li>
+                            <li class="example-item" data-query="Show me my travel spending patterns">Show me my travel spending patterns</li>
+                            <li class="example-item" data-query="Analyze shopping expenses">Analyze shopping expenses</li>
+                        </ul>
+                    </div>
+                    <textarea
+                        id="analyze-input"
+                        class="input-textarea"
+                        placeholder="What would you like to analyze? (e.g., 'Analyze my spending for last month')"
+                        rows="3"></textarea>
+                    <div class="button-group">
+                        <button id="analyze-btn" class="btn btn-success">Generate Analysis</button>
+                        <button id="clear-analyze-btn" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div id="analyze-result-section" class="result-section hidden">
+                    <div class="analysis-container">
+                        <div class="summary-card primary">
+                            <h3>📝 AI Summary</h3>
+                            <p id="analysis-summary" class="summary-text"></p>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h4>Total Transactions</h4>
+                                <div id="analysis-total-txns" class="stat-value">-</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Total Amount</h4>
+                                <div id="analysis-total-amount" class="stat-value">-</div>
+                            </div>
+                        </div>
+
+                        <div class="insights-section">
+                            <h3>💡 Key Insights</h3>
+                            <ul id="insights-list" class="insights-list"></ul>
+                        </div>
+
+                        <div class="statistics-section">
+                            <h3>📈 Detailed Statistics</h3>
+                            <div id="detailed-stats" class="detailed-stats"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>📊 Overview</h3>
+                        <div class="stat-row">
+                            <span class="stat-label">Total Transactions:</span>
+                            <span id="dash-total-txns" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Total Spending:</span>
+                            <span id="dash-total-spending" class="stat-value">-</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>🏪 Spending by Category</h3>
+                        <div id="category-breakdown" class="breakdown-list"></div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>📅 Monthly Trends</h3>
+                        <div id="monthly-breakdown" class="breakdown-list"></div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>💼 Transaction Types</h3>
+                        <div id="type-breakdown" class="breakdown-list"></div>
+                    </div>
+                </div>
+                <div class="button-group center">
+                    <button id="refresh-dashboard-btn" class="btn btn-primary">Refresh Dashboard</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+
+        <div id="error-toast" class="toast error-toast hidden">
+            <span id="error-message"></span>
+            <button class="toast-close">&times;</button>
+        </div>
+
+        <div id="success-toast" class="toast success-toast hidden">
+            <span id="success-message"></span>
+            <button class="toast-close">&times;</button>
+        </div>
+    </div>
+
+    <script src="/credit-card/static/js/app.js"></script>
+</body>
+</html>
