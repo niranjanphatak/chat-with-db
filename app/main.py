@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
-from app.api.routes import router
-from app.services.database import db_service
+from app.api.multi_collection_routes import router as multi_collection_router
+from app.services.multi_collection_db_service import multi_collection_db_service
 from credit_card_app.api.credit_card_routes import router as cc_router
 from credit_card_app.services.database_service import cc_db_service
 from app.config import settings
@@ -24,12 +24,10 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler"""
     # Startup
     logger.info("Starting up MongoDB Query AI application...")
-    db_service.connect()
     cc_db_service.connect()
     yield
     # Shutdown
     logger.info("Shutting down...")
-    db_service.close()
     cc_db_service.close()
 
 
@@ -50,8 +48,8 @@ app.add_middleware(
 )
 
 # Include routes
-app.include_router(router, prefix="/api/v1", tags=["queries"])
-app.include_router(cc_router, prefix="/credit-card/api", tags=["credit-card"])
+app.include_router(multi_collection_router, prefix="/api", tags=["Notifications - Multi-Collection"])
+app.include_router(cc_router, prefix="/credit-card/api", tags=["Credit Card"])
 
 # Mount static files
 static_path = Path(__file__).parent.parent / "static"
@@ -77,21 +75,34 @@ async def api_root():
     """API information endpoint"""
     return {
         "message": "MongoDB Query AI Platform",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "docs": "/docs",
         "applications": {
             "notification_queries": {
-                "ui": "/",
+                "description": "Multi-collection notification system",
+                "documentation": "/MULTI_COLLECTION_ARCHITECTURE.md",
                 "endpoints": {
-                    "query": "/api/v1/query",
-                    "aggregation": "/api/v1/aggregation",
-                    "report": "/api/v1/report",
-                    "schema": "/api/v1/schema",
-                    "stats": "/api/v1/stats",
-                    "health": "/api/v1/health"
-                }
+                    "query": "/api/v2/query",
+                    "dashboard": "/api/v2/dashboard",
+                    "event_details": "/api/v2/event/{event_tracking_id}",
+                    "events_with_channels": "/api/v2/events/with-channels",
+                    "channel_stats": "/api/v2/stats/channel/{channel_name}",
+                    "event_name_stats": "/api/v2/stats/event-name",
+                    "event_name_breakdown": "/api/v2/stats/event-name/{event_name}",
+                    "schema": "/api/v2/schema",
+                    "health": "/api/v2/health"
+                },
+                "features": [
+                    "Primary collection (notification_events)",
+                    "Channel collections (email, sms, push, in-app)",
+                    "Cross-collection queries with $lookup",
+                    "Event-level and channel-level tracking",
+                    "Comprehensive dashboard with analytics",
+                    "Event name-based analytics and filtering"
+                ]
             },
             "credit_card_analyzer": {
+                "description": "Credit card transaction analyzer",
                 "ui": "/credit-card",
                 "endpoints": {
                     "query": "/credit-card/api/query",

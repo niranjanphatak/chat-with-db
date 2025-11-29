@@ -55,13 +55,13 @@ class CreditCardDatabaseService:
 
     def get_collection(self) -> Collection:
         """Get the transactions collection"""
-        if not self.collection:
+        if self.collection is None:
             self.connect()
         return self.collection
 
     def get_database(self) -> Database:
         """Get the database instance"""
-        if not self.db:
+        if self.db is None:
             self.connect()
         return self.db
 
@@ -171,12 +171,60 @@ class CreditCardDatabaseService:
             ]
             type_stats = list(collection.aggregate(type_pipeline))
 
+            # Account/Card-wise breakdown
+            card_pipeline = [
+                {"$match": {"status": "posted"}},
+                {"$group": {
+                    "_id": {
+                        "card_number": "$card_number",
+                        "cardholder_name": "$cardholder_name"
+                    },
+                    "count": {"$sum": 1},
+                    "total_spending": {"$sum": "$amount"},
+                    "total_rewards": {"$sum": "$rewards_earned"},
+                    "total_interest": {"$sum": "$interest_charged"},
+                    "total_fees": {"$sum": {"$add": [
+                        "$late_fee",
+                        "$annual_fee",
+                        "$foreign_transaction_fee",
+                        "$other_fees"
+                    ]}}
+                }},
+                {"$sort": {"total_spending": -1}}
+            ]
+            card_stats = list(collection.aggregate(card_pipeline))
+
+            # Statement-level fees and charges summary
+            fees_pipeline = [
+                {"$match": {"status": "posted"}},
+                {"$group": {
+                    "_id": None,
+                    "total_interest": {"$sum": "$interest_charged"},
+                    "total_late_fees": {"$sum": "$late_fee"},
+                    "total_annual_fees": {"$sum": "$annual_fee"},
+                    "total_foreign_fees": {"$sum": "$foreign_transaction_fee"},
+                    "total_other_fees": {"$sum": "$other_fees"},
+                    "total_rewards": {"$sum": "$rewards_earned"}
+                }}
+            ]
+            fees_result = list(collection.aggregate(fees_pipeline))
+            fees_summary = fees_result[0] if fees_result else {}
+
             return {
                 "total_transactions": total_count,
                 "total_spending": round(total_spending, 2),
                 "by_category": category_stats,
                 "by_month": monthly_stats,
-                "by_type": type_stats
+                "by_type": type_stats,
+                "by_card": card_stats,
+                "fees_summary": {
+                    "total_interest_charged": round(fees_summary.get("total_interest", 0), 2),
+                    "total_late_fees": round(fees_summary.get("total_late_fees", 0), 2),
+                    "total_annual_fees": round(fees_summary.get("total_annual_fees", 0), 2),
+                    "total_foreign_transaction_fees": round(fees_summary.get("total_foreign_fees", 0), 2),
+                    "total_other_fees": round(fees_summary.get("total_other_fees", 0), 2),
+                    "total_rewards_earned": round(fees_summary.get("total_rewards", 0), 2)
+                }
             }
 
         except Exception as e:

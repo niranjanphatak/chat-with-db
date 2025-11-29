@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>MongoDB Query AI - Natural Language to MongoDB</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -30,23 +31,207 @@
 
         <div class="main-content">
             <div class="tabs">
-                <button class="tab-button active" data-tab="query">Query Builder</button>
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="event-analysis">Event Analysis</button>
+                <button class="tab-button" data-tab="query">Query Builder</button>
                 <button class="tab-button" data-tab="aggregation">Aggregation</button>
                 <button class="tab-button" data-tab="report">Reports</button>
                 <button class="tab-button" data-tab="stats">Statistics</button>
             </div>
 
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="dashboard-header">
+                    <h2>Notifications Dashboard</h2>
+                    <button id="refresh-dashboard-btn" class="btn btn-primary">Refresh Data</button>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Status Distribution - Pie Chart -->
+                    <div class="dashboard-card">
+                        <h3>Status Distribution</h3>
+                        <div class="chart-container-small">
+                            <canvas id="status-pie-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Channel Performance - Bar Chart -->
+                    <div class="dashboard-card">
+                        <h3>Channel Performance</h3>
+                        <div class="chart-container-small">
+                            <canvas id="channel-bar-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Notification Types - Doughnut Chart -->
+                    <div class="dashboard-card">
+                        <h3>Notification Types</h3>
+                        <div class="chart-container-small">
+                            <canvas id="type-doughnut-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Priority Distribution - Bar Chart -->
+                    <div class="dashboard-card">
+                        <h3>Priority Levels</h3>
+                        <div class="chart-container-small">
+                            <canvas id="priority-bar-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Daily Trend - Line Chart -->
+                    <div class="dashboard-card dashboard-card-wide">
+                        <h3>7-Day Notification Trend</h3>
+                        <div class="chart-container-medium">
+                            <canvas id="daily-trend-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Success Rate by Channel - Bar Chart -->
+                    <div class="dashboard-card dashboard-card-wide">
+                        <h3>Success Rate by Channel</h3>
+                        <div class="chart-container-medium">
+                            <canvas id="success-rate-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Customers - Horizontal Bar Chart -->
+                    <div class="dashboard-card dashboard-card-wide">
+                        <h3>Top 10 Customers by Notification Count</h3>
+                        <div class="chart-container-medium">
+                            <canvas id="top-customers-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Failed Notifications - Pie Chart -->
+                    <div class="dashboard-card">
+                        <h3>Failed Notifications</h3>
+                        <div class="chart-container-small">
+                            <canvas id="failed-notifications-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Quick Report Generator - Full Width -->
+                    <div class="dashboard-card dashboard-card-wide">
+                        <h3>Quick Report Generator</h3>
+                        <div style="padding: 10px 0;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="quick-report-query">Report Description:</label>
+                                <textarea id="quick-report-query" class="input-textarea" rows="2" placeholder="E.g., Daily notification summary for last 7 days"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <div class="form-group" style="flex: 1; min-width: 150px; margin: 0;">
+                                    <label for="quick-report-format">Format:</label>
+                                    <select id="quick-report-format" class="select-input">
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                        <option value="pdf">PDF</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 150px; margin: 0;">
+                                    <label for="quick-report-chart">Chart:</label>
+                                    <select id="quick-report-chart" class="select-input">
+                                        <option value="none">No Chart</option>
+                                        <option value="bar">Bar</option>
+                                        <option value="pie">Pie</option>
+                                        <option value="line">Line</option>
+                                        <option value="doughnut">Doughnut</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1; min-width: 150px; display: flex; align-items: flex-end;">
+                                    <button id="quick-report-btn" class="btn btn-success" style="width: 100%;">Generate Report</button>
+                                </div>
+                            </div>
+                            <div id="quick-report-status" style="margin-top: 12px; padding: 10px; display: none; border-radius: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Analysis Tab -->
+            <div id="event-analysis-tab" class="tab-content">
+                <div class="dashboard-header">
+                    <h2>Event Name Analysis</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="event-name-selector" class="select-input" style="min-width: 250px;">
+                            <option value="">Select an event name...</option>
+                        </select>
+                        <button id="load-event-charts-btn" class="btn btn-primary">Load Charts</button>
+                    </div>
+                </div>
+
+                <div id="event-name-charts" style="display: none; margin-top: 20px;">
+                    <div class="dashboard-grid">
+                        <!-- Channel Breakdown for Selected Event -->
+                        <div class="dashboard-card dashboard-card-wide">
+                            <h3 id="event-channel-breakdown-title">Channel Breakdown</h3>
+                            <div class="chart-container-medium">
+                                <canvas id="event-channel-breakdown-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Status Distribution for Selected Event -->
+                        <div class="dashboard-card">
+                            <h3 id="event-status-distribution-title">Status Distribution</h3>
+                            <div class="chart-container-small">
+                                <canvas id="event-status-distribution-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Event Statistics Summary -->
+                        <div class="dashboard-card">
+                            <h3 id="event-stats-title">Event Statistics</h3>
+                            <div id="event-stats-summary" style="padding: 20px;">
+                                <!-- Will be populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Channel Success Rates for Event -->
+                        <div class="dashboard-card dashboard-card-wide">
+                            <h3 id="event-success-rates-title">Channel Success Rates</h3>
+                            <div class="chart-container-medium">
+                                <canvas id="event-success-rates-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Query Tab -->
-            <div id="query-tab" class="tab-content active">
+            <div id="query-tab" class="tab-content">
                 <div class="input-section">
                     <h2>Natural Language Query</h2>
                     <div class="examples">
                         <p><strong>Try these examples:</strong></p>
+
+                        <h4 style="margin-top: 15px; color: #3b82f6; font-size: 14px;">📧 Channel-Specific Queries:</h4>
                         <ul>
                             <li class="example-item" data-query="Find all failed email notifications">Find all failed email notifications</li>
-                            <li class="example-item" data-query="Show me notifications sent in the last 7 days">Show me notifications sent in the last 7 days</li>
-                            <li class="example-item" data-query="Get all pending SMS notifications with high priority">Get all pending SMS notifications with high priority</li>
-                            <li class="example-item" data-query="Find notifications for customer C001">Find notifications for customer C001</li>
+                            <li class="example-item" data-query="Show delivered SMS notifications">Show delivered SMS notifications</li>
+                            <li class="example-item" data-query="Get all pending push notifications">Get all pending push notifications</li>
+                            <li class="example-item" data-query="Find bounced email notifications">Find bounced email notifications</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #10b981; font-size: 14px;">🎯 Event Name Queries:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Show all ORDER_PLACED events">Show all ORDER_PLACED events</li>
+                            <li class="example-item" data-query="Find PAYMENT_RECEIVED notification events">Find PAYMENT_RECEIVED notification events</li>
+                            <li class="example-item" data-query="Get all SECURITY_ALERT events">Get all SECURITY_ALERT events</li>
+                            <li class="example-item" data-query="Show SUBSCRIPTION_RENEWED notifications">Show SUBSCRIPTION_RENEWED notifications</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #f59e0b; font-size: 14px;">🔍 Priority & Status Queries:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Find high priority notification events">Find high priority notification events</li>
+                            <li class="example-item" data-query="Show processed notification events">Show processed notification events</li>
+                            <li class="example-item" data-query="Get all accepted events with priority 1">Get all accepted events with priority 1</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #8b5cf6; font-size: 14px;">🔗 Cross-Collection Queries:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Show events with their email delivery status">Show events with their email delivery status</li>
+                            <li class="example-item" data-query="Find events where email was delivered but SMS failed">Find events where email was delivered but SMS failed</li>
+                            <li class="example-item" data-query="Show notification events with all channel statuses">Show notification events with all channel statuses</li>
                         </ul>
                     </div>
                     <textarea
@@ -77,6 +262,37 @@
                         <div class="table-container">
                             <div id="query-results-table"></div>
                         </div>
+
+                        <!-- Auto-generated Charts Section -->
+                        <div id="query-charts-section" class="chart-section hidden">
+                            <h3>Data Visualizations</h3>
+                            <div class="dashboard-grid">
+                                <div class="dashboard-card">
+                                    <h4>Bar Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="query-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Pie Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="query-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Line Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="query-line-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Doughnut Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="query-doughnut-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -87,11 +303,44 @@
                     <h2>Aggregation Pipeline</h2>
                     <div class="examples">
                         <p><strong>Try these examples:</strong></p>
+
+                        <h4 style="margin-top: 15px; color: #3b82f6; font-size: 14px;">📊 Basic Aggregations:</h4>
                         <ul>
                             <li class="example-item" data-query="Count notifications by status">Count notifications by status</li>
-                            <li class="example-item" data-query="Group notifications by channel and show counts">Group notifications by channel and show counts</li>
-                            <li class="example-item" data-query="Top 10 customers by notification count">Top 10 customers by notification count</li>
-                            <li class="example-item" data-query="Show success rate by notification type">Show success rate by notification type</li>
+                            <li class="example-item" data-query="Group notification events by event name">Group notification events by event name</li>
+                            <li class="example-item" data-query="Count events by priority level">Count events by priority level</li>
+                            <li class="example-item" data-query="Group email notifications by status">Group email notifications by status</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #10b981; font-size: 14px;">📈 Event Name Analytics:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Count notifications by event name">Count notifications by event name</li>
+                            <li class="example-item" data-query="Show top 5 event names by count">Show top 5 event names by count</li>
+                            <li class="example-item" data-query="Group ORDER_PLACED events by priority">Group ORDER_PLACED events by priority</li>
+                            <li class="example-item" data-query="Count PAYMENT_RECEIVED events by status">Count PAYMENT_RECEIVED events by status</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #f59e0b; font-size: 14px;">🔗 Cross-Collection Aggregations:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Count delivered notifications by channel">Count delivered notifications by channel</li>
+                            <li class="example-item" data-query="Show events with their email and SMS status">Show events with their email and SMS status</li>
+                            <li class="example-item" data-query="Join notification events with email status">Join notification events with email status</li>
+                            <li class="example-item" data-query="Show delivery stats across all channels">Show delivery stats across all channels</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #8b5cf6; font-size: 14px;">📉 Advanced Analytics:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Show delivery stats for PAYMENT_RECEIVED events">Show delivery stats for PAYMENT_RECEIVED events</li>
+                            <li class="example-item" data-query="Calculate success rate by notification type">Calculate success rate by notification type</li>
+                            <li class="example-item" data-query="Find events with failed deliveries in any channel">Find events with failed deliveries in any channel</li>
+                            <li class="example-item" data-query="Group events by date and count them">Group events by date and count them</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px; color: #ef4444; font-size: 14px;">🎯 Multi-Channel Comparisons:</h4>
+                        <ul>
+                            <li class="example-item" data-query="Compare email vs SMS delivery rates">Compare email vs SMS delivery rates</li>
+                            <li class="example-item" data-query="Show events sent to multiple channels">Show events sent to multiple channels</li>
+                            <li class="example-item" data-query="Find events where email succeeded but SMS failed">Find events where email succeeded but SMS failed</li>
                         </ul>
                     </div>
                     <textarea
@@ -120,6 +369,37 @@
                         </div>
                         <div class="table-container">
                             <div id="agg-results-table"></div>
+                        </div>
+
+                        <!-- Auto-generated Charts Section -->
+                        <div id="agg-charts-section" class="chart-section hidden">
+                            <h3>Data Visualizations</h3>
+                            <div class="dashboard-grid">
+                                <div class="dashboard-card">
+                                    <h4>Bar Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="agg-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Pie Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="agg-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Line Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="agg-line-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Doughnut Chart</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="agg-doughnut-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -150,6 +430,16 @@
                             <option value="pdf">PDF</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="chart-type">Chart Type:</label>
+                        <select id="chart-type" class="select-input">
+                            <option value="none">No Chart</option>
+                            <option value="bar">Bar Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="line">Line Chart</option>
+                            <option value="doughnut">Doughnut Chart</option>
+                        </select>
+                    </div>
                     <div class="button-group">
                         <button id="generate-report-btn" class="btn btn-success">Generate Report</button>
                         <button id="clear-report-btn" class="btn btn-secondary">Clear</button>
@@ -159,6 +449,21 @@
                 <div id="report-result-section" class="result-section hidden">
                     <h3>Report Generated</h3>
                     <div id="report-info" class="report-info"></div>
+
+                    <div id="chart-container" class="chart-container hidden">
+                        <h3>Visualization</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="report-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div id="report-data-section" class="data-section hidden">
+                        <h3>Report Data</h3>
+                        <div class="table-container">
+                            <div id="report-data-table"></div>
+                        </div>
+                    </div>
+
                     <div id="report-download" class="download-section"></div>
                 </div>
             </div>
@@ -203,6 +508,17 @@
         </div>
     </div>
 
+    <!-- Load Chart.js synchronously for better compatibility -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Verify Chart.js loaded successfully
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+        if (typeof Chart !== 'undefined') {
+            console.log('Chart.js version:', Chart.version);
+        } else {
+            console.error('Chart.js failed to load from CDN!');
+        }
+    </script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

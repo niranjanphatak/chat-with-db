@@ -14,6 +14,7 @@ class CreditCardQueryService:
 
     def __init__(self):
         self.llm = ChatOpenAI(
+            base_url=settings.AI_BASE_URL,
             api_key=settings.OPENAI_API_KEY,
             model=settings.OPENAI_MODEL,
             temperature=0
@@ -22,6 +23,9 @@ class CreditCardQueryService:
 
     def _get_system_prompt(self) -> str:
         """Get the system prompt with credit card schema context"""
+        # Escape curly braces in JSON for LangChain template
+        fields_json = json.dumps(CREDIT_CARD_SCHEMA['fields'], indent=2).replace('{', '{{').replace('}', '}}')
+
         return f"""You are an expert MongoDB query generator for credit card transaction data.
 Your task is to convert natural language queries into valid MongoDB Query Language (MQL) queries.
 
@@ -31,7 +35,7 @@ Your job is to generate queries that can be executed against the database.
 Database Schema:
 Collection: {CREDIT_CARD_SCHEMA['collection']}
 Fields:
-{json.dumps(CREDIT_CARD_SCHEMA['fields'], indent=2)}
+{fields_json}
 
 Available indexes: {', '.join(CREDIT_CARD_SCHEMA['indexes'])}
 
@@ -50,44 +54,44 @@ CRITICAL RULES:
 12. Status values are: posted, pending, declined, reversed
 
 Response Format (RETURN ONLY JSON, NO MARKDOWN):
-{{
+{{{{
     "query_type": "find" or "aggregation",
-    "query": {{...}} or [...],
-    "projection": {{...}} (optional for find queries),
+    "query": {{{{...}}}} or [...],
+    "projection": {{{{...}}}} (optional for find queries),
     "explanation": "brief explanation of what the query does"
-}}
+}}}}
 
 Example 1 - Find Query:
-{{
+{{{{
     "query_type": "find",
-    "query": {{"category": "dining", "status": "posted"}},
-    "projection": {{"merchant_name": 1, "amount": 1, "transaction_date": 1}},
+    "query": {{{{"category": "dining", "status": "posted"}}}},
+    "projection": {{{{"merchant_name": 1, "amount": 1, "transaction_date": 1}}}},
     "explanation": "Finds all posted dining transactions with merchant, amount, and date"
-}}
+}}}}
 
 Example 2 - Aggregation Query:
-{{
+{{{{
     "query_type": "aggregation",
     "query": [
-        {{"$match": {{"status": "posted"}}}},
-        {{"$group": {{"_id": "$category", "total": {{"$sum": "$amount"}}, "count": {{"$sum": 1}}}}}},
-        {{"$sort": {{"total": -1}}}}
+        {{{{"$match": {{{{"status": "posted"}}}}}}}},
+        {{{{"$group": {{{{"_id": "$category", "total": {{{{"$sum": "$amount"}}}}, "count": {{{{"$sum": 1}}}}}}}}}}}},
+        {{{{"$sort": {{{{"total": -1}}}}}}}}
     ],
     "explanation": "Groups posted transactions by category, calculates totals and counts, sorted by highest spending"
-}}
+}}}}
 
 Example 3 - Date Range Query:
-{{
+{{{{
     "query_type": "find",
-    "query": {{
-        "transaction_date": {{
-            "$gte": {{"$date": "2024-11-01T00:00:00Z"}},
-            "$lte": {{"$date": "2024-11-30T23:59:59Z"}}
-        }},
+    "query": {{{{
+        "transaction_date": {{{{
+            "$gte": {{{{"$date": "2024-11-01T00:00:00Z"}}}},
+            "$lte": {{{{"$date": "2024-11-30T23:59:59Z"}}}}
+        }}}},
         "status": "posted"
-    }},
+    }}}},
     "explanation": "Finds all posted transactions in November 2024"
-}}
+}}}}
 
 CRITICAL: Return ONLY the JSON object. No markdown formatting, no code blocks, no additional text."""
 

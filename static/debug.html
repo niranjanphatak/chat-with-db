@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        canvas { border: 1px solid #ddd; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Chart Debug</h1>
+
+    <div class="test">
+        <h2>Test 1: Chart.js Library</h2>
+        <div id="test1-result"></div>
+    </div>
+
+    <div class="test">
+        <h2>Test 2: Simple Chart</h2>
+        <canvas id="simple-chart" width="400" height="200"></canvas>
+    </div>
+
+    <div class="test">
+        <h2>Test 3: API Data</h2>
+        <button onclick="testAPI()">Test Dashboard API</button>
+        <pre id="api-result"></pre>
+    </div>
+
+    <div class="test">
+        <h2>Test 4: Render Dashboard Chart</h2>
+        <button onclick="testDashboard()">Test Dashboard Load</button>
+        <div style="width: 400px; height: 300px;">
+            <canvas id="status-pie-chart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        console.log('=== CHART DEBUG STARTED ===');
+
+        // Test 1: Check if Chart.js loaded
+        setTimeout(() => {
+            const result = document.getElementById('test1-result');
+            if (typeof Chart !== 'undefined') {
+                result.innerHTML = '<span style="color: green;">✓ Chart.js loaded successfully</span>';
+                result.innerHTML += '<br>Version: ' + (Chart.version || 'Unknown');
+                console.log('Chart.js version:', Chart.version);
+            } else {
+                result.innerHTML = '<span style="color: red;">✗ Chart.js NOT loaded</span>';
+                console.error('Chart.js not loaded!');
+            }
+        }, 100);
+
+        // Test 2: Simple chart
+        setTimeout(() => {
+            try {
+                const ctx = document.getElementById('simple-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['A', 'B', 'C'],
+                        datasets: [{
+                            label: 'Test Data',
+                            data: [12, 19, 3],
+                            backgroundColor: ['red', 'blue', 'green']
+                        }]
+                    }
+                });
+                console.log('✓ Simple chart created');
+            } catch (error) {
+                console.error('✗ Simple chart failed:', error);
+            }
+        }, 200);
+
+        // Test 3: API
+        async function testAPI() {
+            try {
+                console.log('Fetching dashboard data...');
+                const response = await fetch('/api/v2/dashboard');
+                const data = await response.json();
+                console.log('Dashboard data:', data);
+                document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('API test failed:', error);
+                document.getElementById('api-result').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Test 4: Dashboard chart
+        async function testDashboard() {
+            try {
+                console.log('Loading dashboard...');
+                const response = await fetch('/api/v2/dashboard');
+                const data = await response.json();
+
+                console.log('Rendering status pie chart...');
+                const canvas = document.getElementById('status-pie-chart');
+                const ctx = canvas.getContext('2d');
+
+                const statusData = data.status_distribution;
+                console.log('Status data:', statusData);
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: statusData.map(item => item._id),
+                        datasets: [{
+                            data: statusData.map(item => item.count),
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(124, 58, 237, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                console.log('✓ Dashboard chart created');
+                alert('Dashboard chart created successfully! Check the canvas above.');
+            } catch (error) {
+                console.error('✗ Dashboard test failed:', error);
+                alert('Dashboard test failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

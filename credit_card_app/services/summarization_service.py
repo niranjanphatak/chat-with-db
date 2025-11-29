@@ -46,11 +46,11 @@ Based on these statistics, provide:
 3. Any notable observations or recommendations
 
 Format your response as JSON:
-{{
+{{{{
     "summary": "Natural language summary of the data",
     "insights": ["insight 1", "insight 2", "insight 3"],
     "observations": ["observation 1", "observation 2"]
-}}
+}}}}
 
 Be specific with numbers and percentages. Focus on patterns, trends, and actionable insights.
 """

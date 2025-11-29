@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Diagnostics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #2563eb;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #2563eb;
+        }
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            background: white;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        pre {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .log {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Chart.js Diagnostics</h1>
+
+        <!-- Test 1: Chart.js Library -->
+        <div class="test-section">
+            <h2>Test 1: Chart.js Library Check</h2>
+            <div id="test1-status" class="status info">Testing...</div>
+        </div>
+
+        <!-- Test 2: Simple Chart -->
+        <div class="test-section">
+            <h2>Test 2: Simple Chart Rendering</h2>
+            <button class="btn-primary" onclick="testSimpleChart()">Render Simple Chart</button>
+            <div id="test2-status" class="status info">Click button to test</div>
+            <div class="chart-container">
+                <canvas id="simple-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Test 3: API Connection -->
+        <div class="test-section">
+            <h2>Test 3: Dashboard API Connection</h2>
+            <button class="btn-primary" onclick="testDashboardAPI()">Test API</button>
+            <div id="test3-status" class="status info">Click button to test</div>
+            <pre id="api-data" style="display:none;"></pre>
+        </div>
+
+        <!-- Test 4: Dashboard Chart -->
+        <div class="test-section">
+            <h2>Test 4: Dashboard Chart from API</h2>
+            <button class="btn-primary" onclick="testDashboardChart()">Load Dashboard Chart</button>
+            <div id="test4-status" class="status info">Click button to test</div>
+            <div class="chart-container">
+                <canvas id="dashboard-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Console Log -->
+        <div class="test-section">
+            <h2>Console Log</h2>
+            <button class="btn-primary" onclick="clearConsoleLog()">Clear Log</button>
+            <div id="console-log" class="log"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        let charts = {};
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('console-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            entry.innerHTML = `<strong>${timestamp}</strong> ${icon} ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearConsoleLog() {
+            document.getElementById('console-log').innerHTML = '';
+        }
+
+        function updateStatus(testId, message, type) {
+            const statusDiv = document.getElementById(`test${testId}-status`);
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        // Test 1: Check Chart.js
+        function checkChartJS() {
+            log('Checking if Chart.js is loaded...');
+            if (typeof Chart === 'undefined') {
+                updateStatus(1, '❌ Chart.js NOT loaded', 'error');
+                log('Chart.js library not found', 'error');
+                return false;
+            }
+            const version = Chart.version || 'Unknown';
+            updateStatus(1, `✅ Chart.js loaded successfully (v${version})`, 'success');
+            log(`Chart.js version: ${version}`, 'success');
+            return true;
+        }
+
+        // Test 2: Simple Chart
+        function testSimpleChart() {
+            log('Testing simple chart rendering...');
+
+            if (!checkChartJS()) {
+                updateStatus(2, '❌ Cannot test - Chart.js not loaded', 'error');
+                return;
+            }
+
+            try {
+                if (charts.simple) {
+                    charts.simple.destroy();
+                    log('Destroyed previous simple chart');
+                }
+
+                const canvas = document.getElementById('simple-chart');
+                if (!canvas) {
+                    throw new Error('Canvas element not found');
+                }
+                log('Canvas element found');
+
+                const ctx = canvas.getContext('2d');
+                charts.simple = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple'],
+                        datasets: [{
+                            label: 'Sample Data',
+                            data: [12, 19, 3, 5, 8],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                updateStatus(2, '✅ Simple chart rendered successfully', 'success');
+                log('Simple chart created successfully', 'success');
+            } catch (error) {
+                updateStatus(2, `❌ Error: ${error.message}`, 'error');
+                log(`Error rendering simple chart: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 3: API Test
+        async function testDashboardAPI() {
+            log('Testing dashboard API...');
+
+            try {
+                updateStatus(3, 'Fetching data from API...', 'info');
+                log('Fetching: /api/v2/dashboard');
+
+                const response = await fetch('/api/v2/dashboard');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                log(`API returned ${Object.keys(data).length} data sets`, 'success');
+
+                Object.keys(data).forEach(key => {
+                    if (Array.isArray(data[key])) {
+                        log(`  - ${key}: ${data[key].length} items`);
+                    }
+                });
+
+                document.getElementById('api-data').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('api-data').style.display = 'block';
+
+                updateStatus(3, `✅ API working! Retrieved ${Object.keys(data).length} datasets`, 'success');
+            } catch (error) {
+                updateStatus(3, `❌ API Error: ${error.message}`, 'error');
+                log(`API test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 4: Dashboard Chart
+        async function testDashboardChart() {
+            log('Testing dashboard chart from API data...');
+
+            if (!checkChartJS()) {
+                updateStatus(4, '❌ Cannot test - Chart.js not loaded', 'error');
+                return;
+            }
+
+            try {
+                updateStatus(4, 'Loading dashboard data...', 'info');
+                log('Fetching dashboard data');
+
+                const response = await fetch('/api/v2/dashboard');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                log('Dashboard data received', 'success');
+
+                if (!data.status_distribution || data.status_distribution.length === 0) {
+                    throw new Error('No status distribution data available');
+                }
+
+                log(`Rendering pie chart with ${data.status_distribution.length} items`);
+
+                if (charts.dashboard) {
+                    charts.dashboard.destroy();
+                    log('Destroyed previous dashboard chart');
+                }
+
+                const canvas = document.getElementById('dashboard-chart');
+                if (!canvas) {
+                    throw new Error('Canvas element not found');
+                }
+
+                const ctx = canvas.getContext('2d');
+                charts.dashboard = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.status_distribution.map(item => item._id || 'Unknown'),
+                        datasets: [{
+                            data: data.status_distribution.map(item => item.count),
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(124, 58, 237, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+
+                updateStatus(4, '✅ Dashboard chart rendered successfully!', 'success');
+                log('Dashboard chart created successfully', 'success');
+            } catch (error) {
+                updateStatus(4, `❌ Error: ${error.message}`, 'error');
+                log(`Dashboard chart test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Run initial check when page loads
+        window.addEventListener('load', () => {
+            log('Page loaded');
+            setTimeout(() => {
+                checkChartJS();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

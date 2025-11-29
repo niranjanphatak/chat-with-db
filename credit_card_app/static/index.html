@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credit Card Statement Analyzer - AI Powered</title>
     <link rel="stylesheet" href="/credit-card/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,6 +30,70 @@
         </div>
 
         <div class="main-content">
+            <!-- Smart Search Bar -->
+            <div class="smart-search-section">
+                <div class="search-bar-container">
+                    <h2>🔍 Smart Search with Charts</h2>
+                    <p class="search-subtitle">Ask anything in plain English - results will be visualized when possible</p>
+                    <div class="search-input-wrapper">
+                        <input
+                            type="text"
+                            id="smart-search-input"
+                            class="smart-search-input"
+                            placeholder="e.g., 'Show spending by category' or 'Monthly trends for last 6 months'"
+                            autocomplete="off">
+                        <button id="smart-search-btn" class="btn btn-primary search-btn">
+                            <span>Search & Visualize</span>
+                        </button>
+                    </div>
+                    <div class="search-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="auto-chart" checked>
+                            <span>Auto-generate charts when possible</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Smart Search Results -->
+                <div id="smart-search-results" class="smart-results-section hidden">
+                    <div class="results-tabs">
+                        <button class="results-tab-btn active" data-view="chart">📊 Chart View</button>
+                        <button class="results-tab-btn" data-view="table">📋 Table View</button>
+                        <button class="results-tab-btn" data-view="query">🔧 Query Details</button>
+                    </div>
+
+                    <div class="results-content">
+                        <!-- Chart View -->
+                        <div id="chart-view" class="results-view active">
+                            <div class="chart-container-wrapper">
+                                <canvas id="smart-chart"></canvas>
+                            </div>
+                            <div id="chart-insights" class="chart-insights"></div>
+                        </div>
+
+                        <!-- Table View -->
+                        <div id="table-view" class="results-view">
+                            <div class="table-container">
+                                <div id="smart-table"></div>
+                            </div>
+                        </div>
+
+                        <!-- Query Details View -->
+                        <div id="query-view" class="results-view">
+                            <div class="query-details">
+                                <h4>Generated MongoDB Query</h4>
+                                <div id="smart-query-explanation" class="explanation"></div>
+                                <pre id="smart-query-code" class="code-output"></pre>
+                                <div class="query-stats">
+                                    <span id="smart-query-count" class="result-count"></span>
+                                    <span id="smart-query-time" class="execution-time"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="tabs">
                 <button class="tab-button active" data-tab="query">Transaction Search</button>
                 <button class="tab-button" data-tab="analyze">Smart Analysis</button>
@@ -167,6 +232,16 @@
                     </div>
 
                     <div class="dashboard-card">
+                        <h3>💰 Fees & Charges Summary</h3>
+                        <div id="fees-summary" class="breakdown-list"></div>
+                    </div>
+
+                    <div class="dashboard-card full-width">
+                        <h3>💳 Account-Wise Breakdown</h3>
+                        <div id="card-breakdown" class="breakdown-list"></div>
+                    </div>
+
+                    <div class="dashboard-card">
                         <h3>🏪 Spending by Category</h3>
                         <div id="category-breakdown" class="breakdown-list"></div>
                     </div>
@@ -203,6 +278,6 @@
         </div>
     </div>
 
-    <script src="/credit-card/static/js/app.js"></script>
+    <script src="/credit-card/static/js/app.js?v=2"></script>
 </body>
 </html>

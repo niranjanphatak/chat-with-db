@@ -71,15 +71,6 @@ CREDIT_CARD_SCHEMA = {
             "description": "Additional transaction details",
             "example": "Online purchase - Electronics"
         },
-        "location": {
-            "type": "object",
-            "description": "Transaction location",
-            "properties": {
-                "city": {"type": "string"},
-                "state": {"type": "string"},
-                "country": {"type": "string"}
-            }
-        },
         "is_international": {
             "type": "boolean",
             "description": "Whether transaction is international",
@@ -89,6 +80,46 @@ CREDIT_CARD_SCHEMA = {
             "type": "number",
             "description": "Rewards points or cashback earned",
             "example": 45.99
+        },
+        "billing_cycle": {
+            "type": "string",
+            "description": "Billing cycle identifier (YYYY-MM format)",
+            "example": "2024-11"
+        },
+        "statement_date": {
+            "type": "datetime",
+            "description": "Statement generation date for this billing cycle",
+            "example": "2024-11-30T00:00:00Z"
+        },
+        "due_date": {
+            "type": "datetime",
+            "description": "Payment due date for this billing cycle",
+            "example": "2024-12-25T00:00:00Z"
+        },
+        "interest_charged": {
+            "type": "number",
+            "description": "Interest charged for this transaction (if applicable)",
+            "example": 0.00
+        },
+        "late_fee": {
+            "type": "number",
+            "description": "Late fee charged (if applicable)",
+            "example": 0.00
+        },
+        "annual_fee": {
+            "type": "number",
+            "description": "Annual fee charged (if applicable)",
+            "example": 0.00
+        },
+        "foreign_transaction_fee": {
+            "type": "number",
+            "description": "Foreign transaction fee (if applicable)",
+            "example": 0.00
+        },
+        "other_fees": {
+            "type": "number",
+            "description": "Other miscellaneous fees",
+            "example": 0.00
         }
     },
     "indexes": ["transaction_date", "category", "merchant_name", "card_number", "status"]
@@ -96,12 +127,6 @@ CREDIT_CARD_SCHEMA = {
 
 
 # Pydantic Models for API
-class TransactionLocation(BaseModel):
-    city: Optional[str] = None
-    state: Optional[str] = None
-    country: Optional[str] = "USA"
-
-
 class CreditCardTransaction(BaseModel):
     transaction_id: str
     card_number: str
@@ -116,25 +141,31 @@ class CreditCardTransaction(BaseModel):
     transaction_type: Literal["purchase", "refund", "payment", "fee", "interest", "cashback"]
     status: Literal["posted", "pending", "declined", "reversed"] = "posted"
     description: Optional[str] = None
-    location: Optional[TransactionLocation] = None
     is_international: bool = False
     rewards_earned: float = 0.0
+    billing_cycle: Optional[str] = None
+    statement_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    interest_charged: float = 0.0
+    late_fee: float = 0.0
+    annual_fee: float = 0.0
+    foreign_transaction_fee: float = 0.0
+    other_fees: float = 0.0
 
 
 class QueryRequest(BaseModel):
     user_input: str = Field(..., description="Natural language query")
     execute: bool = Field(default=True, description="Whether to execute the query")
-    summarize: bool = Field(default=False, description="Whether to generate summary")
 
 
 class QueryResponse(BaseModel):
     user_input: str
-    generated_mql: dict
+    generated_mql: dict | list  # Can be dict for find queries or list for aggregations
     explanation: str
     results: Optional[List[dict]] = None
     count: Optional[int] = None
     execution_time_ms: Optional[float] = None
-    summary: Optional[str] = None
+    chart_metadata: Optional[dict] = None
 
 
 class SummaryRequest(BaseModel):
