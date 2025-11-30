@@ -26,9 +26,13 @@ class MultiCollectionAIService:
 
     def _get_system_prompt(self) -> str:
         """Generate system prompt with multi-collection schema"""
+        from datetime import datetime, timezone
         schema_json = json.dumps(MULTI_COLLECTION_NOTIFICATION_SCHEMA, indent=2)
+        current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         return f"""You are a MongoDB query generator for a multi-collection notification system.
+
+CURRENT DATE: {current_date} (Use this as "today" for calculating date ranges)
 
 Your task is to convert natural language queries into valid MongoDB queries.
 
@@ -80,6 +84,20 @@ QUERY GUIDELINES:
 3. Cross-Channel Analysis:
    - Use aggregation with multiple $lookup stages
    - Aggregate results from multiple channels
+
+4. DATE HANDLING (CRITICAL):
+   - ALWAYS calculate dates dynamically based on the CURRENT DATE provided at the top of this prompt
+   - NEVER use hardcoded years or dates from examples - calculate relative to CURRENT DATE
+   - For date comparisons, use $gte, $lte, $gt, $lt operators
+   - Dates must be in ISODate format: {{"$date": "YYYY-MM-DDTHH:mm:ss.sssZ"}}
+   - Handle natural language date patterns (calculate from CURRENT DATE):
+     * "last month" or "last 1 month" = CURRENT DATE minus 30 days to CURRENT DATE
+     * "this month" = first day of current month to CURRENT DATE
+     * "last week" = CURRENT DATE minus 7 days to CURRENT DATE
+     * "this year" = Jan 1 of current year to CURRENT DATE
+   - Use created_at field for event timestamps
+   - Use sent_at, delivered_at for channel timestamps
+   - Always use $match stage for date filtering in aggregations
 
 RESPONSE FORMAT (JSON ONLY, NO MARKDOWN):
 {{
@@ -257,6 +275,105 @@ User: "Show delivery stats for PAYMENT_RECEIVED events"
     ],
     "explanation": "Shows PAYMENT_RECEIVED events with email and SMS channel status",
     "involves_multiple_collections": true
+}}
+
+Example 9 - Date Range Query (Last Month):
+User: "Show PAYMENT_RECEIVED events for last 1 month"
+IMPORTANT: Calculate dates based on CURRENT DATE provided above. For "last 1 month" subtract 30 days from current date.
+{{
+    "query_type": "find",
+    "target_collection": "notification_events",
+    "query": {{
+        "event_name": "PAYMENT_RECEIVED",
+        "created_at": {{
+            "$gte": {{"$date": "<CURRENT_DATE minus 30 days>T00:00:00.000Z"}},
+            "$lte": {{"$date": "<CURRENT_DATE>T23:59:59.999Z"}}
+        }}
+    }},
+    "explanation": "Finds PAYMENT_RECEIVED events created in the last 30 days",
+    "involves_multiple_collections": false
+}}
+
+Example 10 - Date Range with Aggregation:
+User: "Count payment notifications by day for last month"
+IMPORTANT: Use actual CURRENT DATE to calculate the date range.
+{{
+    "query_type": "aggregation",
+    "target_collection": "notification_events",
+    "query": [
+        {{"$match": {{
+            "event_name": "PAYMENT_RECEIVED",
+            "created_at": {{
+                "$gte": {{"$date": "<CURRENT_DATE minus 30 days>T00:00:00.000Z"}},
+                "$lte": {{"$date": "<CURRENT_DATE>T23:59:59.999Z"}}
+            }}
+        }}}},
+        {{"$group": {{
+            "_id": {{"$dateToString": {{"format": "%Y-%m-%d", "date": "$created_at"}}}},
+            "count": {{"$sum": 1}}
+        }}}},
+        {{"$sort": {{"_id": -1}}}}
+    ],
+    "explanation": "Groups PAYMENT_RECEIVED events by day for the last 30 days",
+    "involves_multiple_collections": false
+}}
+
+Example 11 - Payment Events with Channel Status (Last Month):
+User: "Show payment events with delivery status for last month"
+IMPORTANT: Calculate actual date range based on CURRENT DATE.
+{{
+    "query_type": "aggregation",
+    "target_collection": "notification_events",
+    "query": [
+        {{"$match": {{
+            "event_name": "PAYMENT_RECEIVED",
+            "created_at": {{
+                "$gte": {{"$date": "<CURRENT_DATE minus 30 days>T00:00:00.000Z"}},
+                "$lte": {{"$date": "<CURRENT_DATE>T23:59:59.999Z"}}
+            }}
+        }}}},
+        {{"$lookup": {{
+            "from": "email_notifications",
+            "localField": "event_tracking_id",
+            "foreignField": "event_tracking_id",
+            "as": "email"
+        }}}},
+        {{"$lookup": {{
+            "from": "sms_notifications",
+            "localField": "event_tracking_id",
+            "foreignField": "event_tracking_id",
+            "as": "sms"
+        }}}},
+        {{"$addFields": {{
+            "email": {{"$arrayElemAt": ["$email", 0]}},
+            "sms": {{"$arrayElemAt": ["$sms", 0]}}
+        }}}},
+        {{"$limit": 100}}
+    ],
+    "explanation": "Shows PAYMENT_RECEIVED events from last month with email and SMS delivery status",
+    "involves_multiple_collections": true
+}}
+
+Example 12 - Monthly Aggregation with Event Count:
+User: "Group payment notifications by month"
+{{
+    "query_type": "aggregation",
+    "target_collection": "notification_events",
+    "query": [
+        {{"$match": {{"event_name": "PAYMENT_RECEIVED"}}}},
+        {{"$group": {{
+            "_id": {{
+                "year": {{"$year": "$created_at"}},
+                "month": {{"$month": "$created_at"}}
+            }},
+            "count": {{"$sum": 1}},
+            "by_status": {{"$push": "$status"}}
+        }}}},
+        {{"$sort": {{"_id.year": -1, "_id.month": -1}}}},
+        {{"$limit": 12}}
+    ],
+    "explanation": "Groups PAYMENT_RECEIVED events by year and month, showing last 12 months",
+    "involves_multiple_collections": false
 }}
 
 CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text."""

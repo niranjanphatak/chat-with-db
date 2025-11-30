@@ -3,6 +3,7 @@ from app.config import settings
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from dateutil import parser as date_parser
 
 logger = logging.getLogger(__name__)
 
@@ -89,11 +90,45 @@ class MultiCollectionNotificationService:
     # Query Execution Methods
     # ========================================================================
 
+    def _convert_extended_json_dates(self, obj: Any) -> Any:
+        """
+        Recursively convert Extended JSON date format to Python datetime objects.
+
+        MongoDB Extended JSON uses {"$date": "ISO-string"} format, but PyMongo
+        requires actual Python datetime objects for queries.
+
+        Examples:
+            {"$date": "2025-11-30T00:00:00.000Z"} -> datetime(2025, 11, 30, 0, 0, 0)
+        """
+        if isinstance(obj, dict):
+            # Check if this is an Extended JSON date
+            if "$date" in obj and len(obj) == 1:
+                try:
+                    date_str = obj["$date"]
+                    return date_parser.parse(date_str)
+                except Exception as e:
+                    logger.warning(f"Failed to parse date '{obj['$date']}': {e}")
+                    return obj
+
+            # Recursively convert nested dictionaries
+            return {k: self._convert_extended_json_dates(v) for k, v in obj.items()}
+
+        elif isinstance(obj, list):
+            # Recursively convert list elements
+            return [self._convert_extended_json_dates(item) for item in obj]
+
+        else:
+            # Return primitive types as-is
+            return obj
+
     def execute_find(self, collection_name: str, query: dict,
                      projection: Optional[dict] = None,
                      limit: int = 100) -> List[dict]:
         """Execute find query on specified collection"""
         collection = self.get_collection(collection_name)
+
+        # Convert Extended JSON dates to Python datetime objects
+        query = self._convert_extended_json_dates(query)
 
         if projection:
             cursor = collection.find(query, projection).limit(limit)
@@ -105,6 +140,10 @@ class MultiCollectionNotificationService:
     def execute_aggregation(self, collection_name: str, pipeline: list) -> List[dict]:
         """Execute aggregation pipeline on specified collection"""
         collection = self.get_collection(collection_name)
+
+        # Convert Extended JSON dates to Python datetime objects
+        pipeline = self._convert_extended_json_dates(pipeline)
+
         return list(collection.aggregate(pipeline))
 
     # ========================================================================
